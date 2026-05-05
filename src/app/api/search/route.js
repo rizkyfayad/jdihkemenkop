@@ -103,15 +103,12 @@ export async function GET(request) {
     let ai_summary = null;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-    if (GEMINI_API_KEY && mergedData.length > 0) {
+    if (GEMINI_API_KEY) {
       if (query.split(' ').length > 2 || query.toLowerCase().includes('bagaimana') || query.toLowerCase().includes('apa') || query.toLowerCase().includes('syarat') || query.toLowerCase().includes('jelaskan')) {
           try {
-              // Note: Top-level import is better, but since this is App Router and it might be edge, 
-              // we can import it dynamically to avoid issues or use it if available.
               const { GoogleGenerativeAI } = require('@google/generative-ai');
               const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
               
-              // Coba gunakan flash terbaru, kalau gagal fallback ke 1.5-flash
               let model;
               try {
                   model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -119,12 +116,14 @@ export async function GET(request) {
                   model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
               }
 
-              // Ambil maksimal 4 dokumen teratas untuk jadi konteks
-              const topDocsContext = mergedData.slice(0, 4).map(d => {
-                  return `DOKUMEN_SUMBER: ${d.filename}\nURL_BERKAS: ${d.file_url}\nISI:\n${(d.content || "").substring(0, 4000)}`;
-              }).join('\n\n---\n\n');
+              let prompt = "";
 
-              const prompt = `
+              if (mergedData.length > 0) {
+                  const topDocsContext = mergedData.slice(0, 4).map(d => {
+                      return `DOKUMEN_SUMBER: ${d.filename}\nURL_BERKAS: ${d.file_url}\nISI:\n${(d.content || "").substring(0, 4000)}`;
+                  }).join('\n\n---\n\n');
+
+                  prompt = `
 Kamu adalah Asisten Hukum Ahli untuk portal web Peraturan/JDIH. 
 Tugasmu adalah menjawab pertanyaan pengguna secara ringkas, elegan, dan profesional berdasarkan dokumen referensi di bawah ini.
 
@@ -136,10 +135,21 @@ ${topDocsContext}
 ATURAN MENJAWAB:
 1. Jawab langsung pada intinya secara terstruktur (bisa pakai bullet points).
 2. Di setiap akhir poin/kalimat yang bersumber spesifik pada satu peraturan, WAJIB tempelkan tombol tautannya dengan format Markdown murni: [📄 NAMA DAN NOMOR PERATURAN](URL_BERKAS) . 
-   Ganti isi 'NAMA DAN NOMOR PERATURAN' dengan keterangan aslinya (misal: "Permenkop Nomor 2 Tahun 2024").
+   Ganti isi 'NAMA DAN NOMOR PERATURAN' dengan keterangan aslinya.
    Ganti nilai 'URL_BERKAS' dengan URL_BERKAS relevan milik dokumen tersebut.
-3. Jika jawaban tidak ada dalam teks referensi, katakan saja informasi tidak tersedia di database.
-              `;
+3. Jika jawaban tidak ada dalam teks referensi, katakan bahwa informasi spesifik tidak ditemukan di database peraturan, lalu berikan jawaban umum terbaikmu sebagai asisten AI.
+                  `;
+              } else {
+                  prompt = `
+Kamu adalah Asisten Hukum Ahli untuk portal web Peraturan/JDIH Kemenkop. 
+Pengguna menanyakan hal berikut: "${query}"
+
+Namun, sistem database tidak menemukan dokumen spesifik yang cocok dengan kata kunci tersebut.
+Tugasmu: 
+1. Beritahu pengguna dengan sopan bahwa dokumen resminya tidak ditemukan di sistem saat ini.
+2. Berikan jawaban umum yang informatif dan profesional sesuai dengan pengetahuan umum yang kamu miliki mengenai hukum, koperasi, atau pemerintahan di Indonesia.
+                  `;
+              }
 
               const aiResult = await model.generateContent(prompt);
               ai_summary = aiResult.response.text();
