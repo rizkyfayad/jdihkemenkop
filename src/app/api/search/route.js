@@ -48,7 +48,7 @@ export async function GET(request) {
       .from('documents')
       .select('id, filename, file_url, content')
       .or(contentOrFilter)
-      .limit(20);
+      .limit(100); // Naikkan limit agar dokumen yang relevan tidak terpotong sebelum di-ranking JS
 
     // Run queries concurrently
     const [exactRes, filenameRes, contentRes] = await Promise.all([exactSearchQuery, filenameSearchQuery, contentSearchQuery]);
@@ -78,11 +78,12 @@ export async function GET(request) {
     addDocs(contentRes.data);
 
     // Rank results based on relevance to the query
-    const exactPhraseLower = query.toLowerCase();
+    // Normalisasi spasi (menghapus spasi ganda) untuk mencocokkan teks hasil ekstrak PDF
+    const exactPhraseLower = query.toLowerCase().replace(/\s+/g, ' ').trim();
     mergedData.forEach(doc => {
         let score = 0;
-        const contentLower = (doc.content || "").toLowerCase();
-        const filenameLower = (doc.filename || "").toLowerCase();
+        const contentLower = (doc.content || "").toLowerCase().replace(/\s+/g, ' ');
+        const filenameLower = (doc.filename || "").toLowerCase().replace(/\s+/g, ' ');
         
         if (contentLower.includes(exactPhraseLower)) score += 1000;
         if (filenameLower.includes(exactPhraseLower)) score += 1000;
