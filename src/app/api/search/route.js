@@ -134,10 +134,9 @@ ${topDocsContext}
 
 ATURAN MENJAWAB:
 1. Jawab langsung pada intinya secara terstruktur (bisa pakai bullet points).
-2. Di setiap akhir poin/kalimat yang bersumber spesifik pada satu peraturan, WAJIB tempelkan tombol tautannya dengan format Markdown murni: [📄 NAMA DAN NOMOR PERATURAN](URL_BERKAS) . 
-   Ganti isi 'NAMA DAN NOMOR PERATURAN' dengan keterangan aslinya.
-   Ganti nilai 'URL_BERKAS' dengan URL_BERKAS relevan milik dokumen tersebut.
-3. Jika jawaban tidak ada dalam teks referensi, katakan bahwa informasi spesifik tidak ditemukan di database peraturan, lalu berikan jawaban umum terbaikmu sebagai asisten AI.
+2. JANGAN mengulang-ulang menempelkan tautan dokumen di setiap poin jawaban.
+3. Sebagai gantinya, sediakan bagian khusus "**Sumber Referensi:**" di bagian paling bawah dari seluruh jawabanmu. Di sana, buat daftar (bullet points) tautan ke dokumen yang kamu gunakan menggunakan format Markdown murni: [📄 NAMA DAN NOMOR PERATURAN](URL_BERKAS). Tampilkan setiap dokumen HANYA SATU KALI, meskipun dipakai di banyak poin.
+4. Jika jawaban tidak ada dalam teks referensi, katakan bahwa informasi spesifik tidak ditemukan di database peraturan, lalu berikan jawaban umum terbaikmu sebagai asisten AI.
                   `;
               } else {
                   prompt = `
