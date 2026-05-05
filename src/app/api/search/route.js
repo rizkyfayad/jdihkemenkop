@@ -151,7 +151,8 @@ export async function GET(request) {
 
               if (mergedData.length > 0) {
                   const topDocsContext = mergedData.slice(0, 4).map(d => {
-                      return `DOKUMEN_SUMBER: ${d.filename}\nURL_BERKAS: ${d.file_url}\nISI:\n${(d.content || "").substring(0, 4000)}`;
+                      // Ambil hingga 30.000 karakter per dokumen agar pasal-pasal di bagian akhir tidak terpotong
+                      return `DOKUMEN_SUMBER: ${d.filename}\nURL_BERKAS: ${d.file_url}\nISI:\n${(d.content || "").substring(0, 30000)}`;
                   }).join('\n\n---\n\n');
 
                   prompt = `
@@ -166,8 +167,12 @@ ${topDocsContext}
 ATURAN MENJAWAB:
 1. Jawab langsung pada intinya secara terstruktur (bisa pakai bullet points).
 2. JANGAN mengulang-ulang menempelkan tautan dokumen di setiap poin jawaban.
-3. Sebagai gantinya, sediakan bagian khusus "**Sumber Referensi:**" di bagian paling bawah dari seluruh jawabanmu. Di sana, buat daftar (bullet points) tautan ke dokumen yang kamu gunakan menggunakan format Markdown murni: [📄 NAMA DAN NOMOR PERATURAN](URL_BERKAS). Tampilkan setiap dokumen HANYA SATU KALI, meskipun dipakai di banyak poin.
-4. Jika jawaban tidak ada dalam teks referensi, katakan bahwa informasi spesifik tidak ditemukan di database peraturan, lalu berikan jawaban umum terbaikmu sebagai asisten AI.
+3. Sebagai gantinya, sediakan bagian khusus "**Sumber Referensi:**" di bagian paling bawah dari seluruh jawabanmu. 
+4. Di bagian "**Sumber Referensi:**" tersebut, WAJIB gunakan format Markdown Tautan murni secara lengkap beserta kurung siku dan kurung biasa, seperti contoh persis berikut ini:
+   - [📄 Nama Dokumen Peraturan](URL_BERKAS)
+   (Pastikan tanda kurung siku "[" di awal tidak hilang!)
+5. Tampilkan setiap dokumen HANYA SATU KALI, meskipun dipakai di banyak poin.
+6. Jika jawaban tidak ada dalam teks referensi, katakan bahwa informasi spesifik tidak ditemukan di database peraturan, lalu berikan jawaban umum terbaikmu sebagai asisten AI.
                   `;
               } else {
                   prompt = `
