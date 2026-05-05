@@ -25,7 +25,14 @@ export async function GET(request) {
     // Jika semua kata habis difilter (misal query sangat pendek), gunakan kata terpanjang
     const effectiveKeywords = keywords.length > 0 ? keywords : allWords.sort((a,b) => b.length - a.length).slice(0, 3);
 
-    // 1. Search by filename — OR logic: cocok jika ADA SATU kata yang cocok
+    // 1. Exact Phrase Search
+    const exactSearchQuery = supabase
+      .from('documents')
+      .select('id, filename, file_url, content')
+      .ilike('content', `%${query.trim()}%`)
+      .limit(10);
+
+    // 2. Search by filename — OR logic
     const filenameOrFilter = effectiveKeywords.map(w => `filename.ilike.%${w}%`).join(',');
     const filenameSearchQuery = supabase
       .from('documents')
@@ -33,29 +40,27 @@ export async function GET(request) {
       .or(filenameOrFilter)
       .limit(20);
 
-    // 2. Search by content — gunakan kata kunci pertama yang paling relevan untuk FTS
-    // Gabungkan dengan operator OR (|) untuk websearch PostgreSQL
-    const ftsQuery = effectiveKeywords.join(' | ');
+    // 3. Search by content — OR logic menggunakan ilike agar lebih persis (fallback)
+    // Batasi maksimum 5 keyword agar query tidak terlalu berat
+    const topKeywords = effectiveKeywords.slice(0, 5);
+    const contentOrFilter = topKeywords.map(w => `content.ilike.%${w}%`).join(',');
     const contentSearchQuery = supabase
       .from('documents')
       .select('id, filename, file_url, content')
-      .textSearch('content', ftsQuery, {
-        type: 'websearch',
-        config: 'simple'
-      })
+      .or(contentOrFilter)
       .limit(20);
 
-    // Run both queries concurrently
-    const [filenameRes, contentRes] = await Promise.all([filenameSearchQuery, contentSearchQuery]);
+    // Run queries concurrently
+    const [exactRes, filenameRes, contentRes] = await Promise.all([exactSearchQuery, filenameSearchQuery, contentSearchQuery]);
 
     // Handle possible errors
-    if (filenameRes.error && contentRes.error) {
-       console.error('Both searches failed:', filenameRes.error, contentRes.error);
+    if (exactRes.error && filenameRes.error && contentRes.error) {
+       console.error('All searches failed:', exactRes.error);
        throw contentRes.error;
     }
 
     // Merge results uniquely by ID
-    const mergedData = [];
+    let mergedData = [];
     const seenIds = new Set();
 
     const addDocs = (docs) => {
@@ -68,25 +73,54 @@ export async function GET(request) {
        }
     };
 
-    // Prioritize filename matches, then content matches
+    addDocs(exactRes.data);
     addDocs(filenameRes.data);
     addDocs(contentRes.data);
+
+    // Rank results based on relevance to the query
+    const exactPhraseLower = query.toLowerCase();
+    mergedData.forEach(doc => {
+        let score = 0;
+        const contentLower = (doc.content || "").toLowerCase();
+        const filenameLower = (doc.filename || "").toLowerCase();
+        
+        if (contentLower.includes(exactPhraseLower)) score += 1000;
+        if (filenameLower.includes(exactPhraseLower)) score += 1000;
+
+        effectiveKeywords.forEach(kw => {
+            if (filenameLower.includes(kw)) score += 10;
+            if (contentLower.includes(kw)) score += 1;
+        });
+
+        doc._relevanceScore = score;
+    });
+
+    // Sort descending by score
+    mergedData.sort((a, b) => b._relevanceScore - a._relevanceScore);
 
     // === Integrasi RAG dengan Gemini AI ===
     let ai_summary = null;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
     if (GEMINI_API_KEY && mergedData.length > 0) {
-      // Hanya panggil AI jika query terlihat seperti pertanyaan natural (bukan cuma "UU 2 2024")
-      if (query.split(' ').length > 2 || query.toLowerCase().includes('bagaimana') || query.toLowerCase().includes('apa') || query.toLowerCase().includes('syarat')) {
+      if (query.split(' ').length > 2 || query.toLowerCase().includes('bagaimana') || query.toLowerCase().includes('apa') || query.toLowerCase().includes('syarat') || query.toLowerCase().includes('jelaskan')) {
           try {
+              // Note: Top-level import is better, but since this is App Router and it might be edge, 
+              // we can import it dynamically to avoid issues or use it if available.
               const { GoogleGenerativeAI } = require('@google/generative-ai');
               const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-              const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+              
+              // Coba gunakan flash terbaru, kalau gagal fallback ke 1.5-flash
+              let model;
+              try {
+                  model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+              } catch (e) {
+                  model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+              }
 
-              // Ambil maksimal 3 dokumen teratas untuk jadi konteks
-              const topDocsContext = mergedData.slice(0, 3).map(d => {
-                  return `DOKUMEN_SUMBER: ${d.filename}\nURL_BERKAS: ${d.file_url}\nISI:\n${(d.content || "").substring(0, 5000)}`;
+              // Ambil maksimal 4 dokumen teratas untuk jadi konteks
+              const topDocsContext = mergedData.slice(0, 4).map(d => {
+                  return `DOKUMEN_SUMBER: ${d.filename}\nURL_BERKAS: ${d.file_url}\nISI:\n${(d.content || "").substring(0, 4000)}`;
               }).join('\n\n---\n\n');
 
               const prompt = `
@@ -102,15 +136,15 @@ ATURAN MENJAWAB:
 1. Jawab langsung pada intinya secara terstruktur (bisa pakai bullet points).
 2. Di setiap akhir poin/kalimat yang bersumber spesifik pada satu peraturan, WAJIB tempelkan tombol tautannya dengan format Markdown murni: [📄 NAMA DAN NOMOR PERATURAN](URL_BERKAS) . 
    Ganti isi 'NAMA DAN NOMOR PERATURAN' dengan keterangan aslinya (misal: "Permenkop Nomor 2 Tahun 2024").
-   Ganti nilai 'URL_BERKAS' dengan *URL_BERKAS* relevan milik dokumen tersebut (jangan mengarang URL sendiri).
-3. Jika jawaban tidak ada dalam teks referensi, cukup menolak dengan sopan tanpa memberikan referensi ngawur.
+   Ganti nilai 'URL_BERKAS' dengan URL_BERKAS relevan milik dokumen tersebut.
+3. Jika jawaban tidak ada dalam teks referensi, katakan saja informasi tidak tersedia di database.
               `;
 
               const aiResult = await model.generateContent(prompt);
               ai_summary = aiResult.response.text();
           } catch (aiError) {
               console.error("Gemini AI Error:", aiError);
-              ai_summary = "⚠️ *Sistem AI Visi sedang sibuk atau mengalami kendala saat merangkum dokumen.*";
+              ai_summary = "⚠️ *Maaf, AI sedang sibuk merangkum atau kunci API bermasalah. Anda tetap bisa membaca dokumen aslinya di bawah.*";
           }
       }
     }
@@ -164,13 +198,31 @@ function processResults(data, query) {
     } else {
         // Jika tidak berformat Peraturan Kementerian standar (misal PDF panduan/bebas), gunakan pencari kalimat
         const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-        const queryLower = query.toLowerCase();
+        const queryLower = query.toLowerCase().replace(/\s+/g, ' ');
+        const keywords = queryLower.split(' ').filter(w => w.length > 3);
         
         let matchIdx = -1;
+        // Cari exact phrase match
         for (let i = 0; i < sentences.length; i++) {
-            if (sentences[i].toLowerCase().includes(queryLower)) {
+            if (sentences[i].toLowerCase().replace(/\s+/g, ' ').includes(queryLower)) {
                 matchIdx = i;
                 break;
+            }
+        }
+        
+        // Kalau tidak ketemu, cari kalimat yang mengandung keyword terbanyak
+        if (matchIdx === -1 && keywords.length > 0) {
+            let maxHits = 0;
+            for (let i = 0; i < sentences.length; i++) {
+                const sLower = sentences[i].toLowerCase();
+                let hits = 0;
+                keywords.forEach(kw => {
+                    if (sLower.includes(kw)) hits++;
+                });
+                if (hits > maxHits) {
+                    maxHits = hits;
+                    matchIdx = i;
+                }
             }
         }
         
