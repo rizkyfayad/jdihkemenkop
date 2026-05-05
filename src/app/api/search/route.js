@@ -80,17 +80,48 @@ export async function GET(request) {
     // Rank results based on relevance to the query
     // Normalisasi spasi (menghapus spasi ganda) untuk mencocokkan teks hasil ekstrak PDF
     const exactPhraseLower = query.toLowerCase().replace(/\s+/g, ' ').trim();
+    const queryWords = exactPhraseLower.split(' ');
+
     mergedData.forEach(doc => {
         let score = 0;
         const contentLower = (doc.content || "").toLowerCase().replace(/\s+/g, ' ');
         const filenameLower = (doc.filename || "").toLowerCase().replace(/\s+/g, ' ');
         
-        if (contentLower.includes(exactPhraseLower)) score += 1000;
-        if (filenameLower.includes(exactPhraseLower)) score += 1000;
+        // 1. Exact phrase match (Full query)
+        if (contentLower.includes(exactPhraseLower)) score += 5000;
+        if (filenameLower.includes(exactPhraseLower)) score += 5000;
 
+        // 2. Sliding window phrase matching (N-grams) untuk menangkap konteks kalimat terpotong
+        // Semakin panjang kalimat yang berurutan persis sama, semakin tinggi skornya
+        if (queryWords.length >= 2) {
+            for (let i = 0; i < queryWords.length - 1; i++) {
+                const phrase2 = queryWords.slice(i, i+2).join(' ');
+                if (contentLower.includes(phrase2)) score += 20;
+            }
+        }
+        if (queryWords.length >= 3) {
+            for (let i = 0; i < queryWords.length - 2; i++) {
+                const phrase3 = queryWords.slice(i, i+3).join(' ');
+                if (contentLower.includes(phrase3)) score += 50;
+            }
+        }
+        if (queryWords.length >= 4) {
+            for (let i = 0; i < queryWords.length - 3; i++) {
+                const phrase4 = queryWords.slice(i, i+4).join(' ');
+                if (contentLower.includes(phrase4)) score += 100;
+            }
+        }
+        if (queryWords.length >= 5) {
+            for (let i = 0; i < queryWords.length - 4; i++) {
+                const phrase5 = queryWords.slice(i, i+5).join(' ');
+                if (contentLower.includes(phrase5)) score += 300;
+            }
+        }
+
+        // 3. Keyword tunggal matching
         effectiveKeywords.forEach(kw => {
             if (filenameLower.includes(kw)) score += 10;
-            if (contentLower.includes(kw)) score += 1;
+            if (contentLower.includes(kw)) score += 2;
         });
 
         doc._relevanceScore = score;
