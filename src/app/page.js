@@ -49,8 +49,17 @@ export default function Home() {
     const jenisMatch = filename.match(/(Permenkop|Permendagri|Permendag|Peraturan\sMenteri|UU|Undang[ -]Undang|Keppres|Inpres|SE|Surat\sEdaran|SK|Keputusan|PMK)/i);
     if (jenisMatch) jenis = jenisMatch[1].toUpperCase();
 
+    // Cari angka dengan kata "Nomor" atau "No"
     const nomorMatch = filename.match(/(?:Nomor|Nom|No\.?)\s*([\w\/-]+)/i);
-    if (nomorMatch && nomorMatch[1].length < 15) nomor = nomorMatch[1]; // Hindari match ngawur
+    if (nomorMatch && nomorMatch[1].length < 15) {
+      nomor = nomorMatch[1];
+    } else if (jenisMatch) {
+      // Jika tidak ada kata "Nomor", cari angka yang menempel langsung setelah jenis (misal "Permenkop 9")
+      const directMatch = filename.match(new RegExp(`${jenisMatch[1]}\\s+([\\w\\/-]+)\\s+(?:Tahun|Thn|Th|T\\b)`, 'i'));
+      if (directMatch) {
+         nomor = directMatch[1];
+      }
+    }
 
     const tahunMatch = filename.match(/(?:Th|Thn|Tahun)\.?\s*(\d{4})/i);
     if (tahunMatch) tahun = tahunMatch[1];
@@ -59,6 +68,8 @@ export default function Home() {
       const guessYear = filename.match(/\b(19\d{2}|20\d{2})\b/);
       if (guessYear) tahun = guessYear[1];
     }
+
+    jenis = jenis.replace(/_/g, ' ');
 
     return { jenis, nomor, tahun };
   };
@@ -389,33 +400,33 @@ export default function Home() {
                             </div>
                           </div>
 
-                          <div className="result-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 30%) 1fr', gap: '2rem', padding: '1.5rem' }}>
+                          <div className="result-grid" style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '2rem', padding: '1.25rem 1.5rem' }}>
                             {/* Left: Metadata */}
                             <div className="result-metadata" style={{ borderRight: '1px solid rgba(0,80,102,0.05)', paddingRight: '1.5rem' }}>
-                              <table style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
+                              <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
                                 <tbody>
                                   <tr>
-                                    <td style={{ padding: '0.75rem 0', color: '#64748b', borderBottom: '1px solid rgba(0,80,102,0.05)' }}>Jenis</td>
-                                    <td style={{ padding: '0.75rem 0', fontWeight: '500', textAlign: 'right', borderBottom: '1px solid rgba(0,80,102,0.05)', color: '#0f172a' }}>{meta.jenis}</td>
+                                    <td style={{ padding: '0.6rem 0', color: '#64748b', borderBottom: '1px solid rgba(0,80,102,0.05)' }}>Jenis</td>
+                                    <td style={{ padding: '0.6rem 0', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid rgba(0,80,102,0.05)', color: '#0f172a' }}>{meta.jenis}</td>
                                   </tr>
                                   <tr>
-                                    <td style={{ padding: '0.75rem 0', color: '#64748b', borderBottom: '1px solid rgba(0,80,102,0.05)' }}>Nomor</td>
-                                    <td style={{ padding: '0.75rem 0', fontWeight: '500', textAlign: 'right', borderBottom: '1px solid rgba(0,80,102,0.05)', color: '#0f172a' }}>{meta.nomor}</td>
+                                    <td style={{ padding: '0.6rem 0', color: '#64748b', borderBottom: '1px solid rgba(0,80,102,0.05)' }}>Nomor</td>
+                                    <td style={{ padding: '0.6rem 0', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid rgba(0,80,102,0.05)', color: '#0f172a' }}>{meta.nomor}</td>
                                   </tr>
                                   <tr>
-                                    <td style={{ padding: '0.75rem 0', color: '#64748b' }}>Tahun</td>
-                                    <td style={{ padding: '0.75rem 0', fontWeight: '500', textAlign: 'right', color: '#0f172a' }}>{meta.tahun}</td>
+                                    <td style={{ padding: '0.6rem 0', color: '#64748b' }}>Tahun</td>
+                                    <td style={{ padding: '0.6rem 0', fontWeight: '600', textAlign: 'right', color: '#0f172a' }}>{meta.tahun}</td>
                                   </tr>
                                 </tbody>
                               </table>
                               
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '2rem' }}>
-                                <a href={result.file_url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#005066', color: 'white', padding: '0.75rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500, transition: 'background 0.2s' }} onMouseEnter={(e)=>e.currentTarget.style.background='#003d4d'} onMouseLeave={(e)=>e.currentTarget.style.background='#005066'}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '1.5rem' }}>
+                                <a href={result.file_url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#005066', color: 'white', padding: '0.6rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, transition: 'background 0.2s' }} onMouseEnter={(e)=>e.currentTarget.style.background='#003d4d'} onMouseLeave={(e)=>e.currentTarget.style.background='#005066'}>
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
                                   Buka PDF
                                 </a>
-                                <a href={`${result.file_url}?download=`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid rgba(157,195,39,0.8)', color: '#005066', padding: '0.75rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500, transition: 'background 0.2s' }} onMouseEnter={(e)=>e.currentTarget.style.background='rgba(157,195,39,0.1)'} onMouseLeave={(e)=>e.currentTarget.style.background='transparent'}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                <a href={`${result.file_url}?download=`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid rgba(157,195,39,0.8)', color: '#005066', padding: '0.6rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, transition: 'background 0.2s' }} onMouseEnter={(e)=>e.currentTarget.style.background='rgba(157,195,39,0.1)'} onMouseLeave={(e)=>e.currentTarget.style.background='transparent'}>
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                                   Unduh Berkas
                                 </a>
                               </div>
