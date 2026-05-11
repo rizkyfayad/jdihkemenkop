@@ -358,74 +358,7 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {searchResults.length > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <h3 className="results-header" style={{ color: '#475569', fontSize: '1.1rem', fontWeight: 500, borderBottom: '1px solid rgba(0,80,102,0.1)', paddingBottom: '1rem' }}>
-                    Ditemukan <span style={{color: '#005066', fontWeight: 600}}>{searchResults.length}</span> dokumen dari repositori
-                  </h3>
-                  
-                  <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.5rem'}}>
-                    {searchResults.map((result, idx) => {
-                      const meta = extractMetadata(result.filename);
-                      return (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 15 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 + (idx * 0.05) }}
-                          key={result.id || idx} 
-                          className="result-item" 
-                          style={{
-                             background: 'rgba(255, 255, 255, 0.9)',
-                             backdropFilter: 'blur(10px)',
-                             border: '1px solid rgba(0,80,102,0.1)',
-                             borderRadius: '16px',
-                             overflow: 'hidden',
-                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-                             transition: 'transform 0.2s',
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                        >
-                          {/* Header Premium Style */}
-                          <div style={{ background: 'rgba(0,80,102,0.03)', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,80,102,0.05)' }}>
-                            <h4 style={{ fontSize: '1.2rem', color: '#005066', fontWeight: 'bold', margin: 0, letterSpacing: '0.02em' }}>
-                              {meta.jenis} {meta.nomor !== '-' ? `Nomor ${meta.nomor}` : ''} {meta.tahun !== '-' ? `Tahun ${meta.tahun}` : ''}
-                            </h4>
-                          </div>
 
-                          <div className="result-grid" style={{ padding: '1.25rem 1.5rem' }}>
-                            {/* Metadata */}
-                            <div className="result-metadata">
-                              <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-                                <a href={result.file_url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#005066', color: 'white', padding: '0.8rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, transition: 'background 0.2s' }} onMouseEnter={(e)=>e.currentTarget.style.background='#003d4d'} onMouseLeave={(e)=>e.currentTarget.style.background='#005066'}>
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
-                                  Buka PDF
-                                </a>
-                                <a href={`${result.file_url}?download=`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid rgba(157,195,39,0.8)', color: '#005066', padding: '0.8rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, transition: 'background 0.2s' }} onMouseEnter={(e)=>e.currentTarget.style.background='rgba(157,195,39,0.1)'} onMouseLeave={(e)=>e.currentTarget.style.background='transparent'}>
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                                  Unduh Berkas
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-
-              {!isSearching && hasSearched && searchResults.length === 0 && !searchError && (
-                <motion.div initial={{opacity: 0}} animate={{opacity: 1}} style={{textAlign: 'center', padding: '4rem 0'}}>
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(0,80,102,0.2)" strokeWidth="1" style={{margin: '0 auto 1rem auto', display: 'block'}}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  <h3 style={{fontSize: '1.2rem', color: '#005066', fontWeight: 500}}>Tidak menemukan apa-apa</h3>
-                  <p style={{color: '#475569'}}>Coba gunakan ejaan atau kata kunci yang berbeda.</p>
-                </motion.div>
-              )}
             </motion.div>
           )}
 
