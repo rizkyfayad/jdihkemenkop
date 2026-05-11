@@ -392,12 +392,9 @@ export default function Home() {
                         >
                           {/* Header Premium Style */}
                           <div style={{ background: 'rgba(0,80,102,0.03)', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,80,102,0.05)' }}>
-                            <h4 style={{ fontSize: '1.2rem', color: '#005066', fontWeight: 'bold', marginBottom: '0.4rem', letterSpacing: '0.02em' }}>
+                            <h4 style={{ fontSize: '1.2rem', color: '#005066', fontWeight: 'bold', margin: 0, letterSpacing: '0.02em' }}>
                               {meta.jenis} {meta.nomor !== '-' ? `Nomor ${meta.nomor}` : ''} {meta.tahun !== '-' ? `Tahun ${meta.tahun}` : ''}
                             </h4>
-                            <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
-                              {result.filename}
-                            </div>
                           </div>
 
                           <div className="result-grid" style={{ padding: '1.25rem 1.5rem' }}>
