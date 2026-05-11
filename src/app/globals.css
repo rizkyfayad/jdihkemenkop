@@ -248,24 +248,21 @@ body {
 
 /* === AI SUMMARY UI DESIGN === */
 .ai-markdown a {
-  display: inline-block;
+  display: inline;
   background-color: rgba(157, 195, 39, 0.15);
-  border: 1px solid rgba(157, 195, 39, 0.4);
   color: #005066;
-  padding: 2px 10px;
-  border-radius: 9999px; /* Pill shape */
-  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.9rem;
   text-decoration: none;
   font-weight: 600;
-  margin-left: 8px;
+  word-break: break-word;
   transition: all 0.2s ease-in-out;
-  vertical-align: middle;
 }
 
 .ai-markdown a:hover {
   background-color: rgba(157, 195, 39, 0.3);
   color: #003d4d;
-  transform: translateY(-1px);
 }
 
 .ai-markdown p {
