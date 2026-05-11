@@ -403,24 +403,7 @@ export default function Home() {
                           <div className="result-grid" style={{ padding: '1.25rem 1.5rem' }}>
                             {/* Metadata */}
                             <div className="result-metadata">
-                              <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
-                                <tbody>
-                                  <tr>
-                                    <td style={{ padding: '0.6rem 0', color: '#64748b', borderBottom: '1px solid rgba(0,80,102,0.05)', width: '30%' }}>Jenis</td>
-                                    <td style={{ padding: '0.6rem 0', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid rgba(0,80,102,0.05)', color: '#0f172a' }}>{meta.jenis}</td>
-                                  </tr>
-                                  <tr>
-                                    <td style={{ padding: '0.6rem 0', color: '#64748b', borderBottom: '1px solid rgba(0,80,102,0.05)' }}>Nomor</td>
-                                    <td style={{ padding: '0.6rem 0', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid rgba(0,80,102,0.05)', color: '#0f172a' }}>{meta.nomor}</td>
-                                  </tr>
-                                  <tr>
-                                    <td style={{ padding: '0.6rem 0', color: '#64748b' }}>Tahun</td>
-                                    <td style={{ padding: '0.6rem 0', fontWeight: '600', textAlign: 'right', color: '#0f172a' }}>{meta.tahun}</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                              
-                              <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginTop: '1.5rem' }}>
+                              <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
                                 <a href={result.file_url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#005066', color: 'white', padding: '0.8rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600, transition: 'background 0.2s' }} onMouseEnter={(e)=>e.currentTarget.style.background='#003d4d'} onMouseLeave={(e)=>e.currentTarget.style.background='#005066'}>
                                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
                                   Buka PDF
